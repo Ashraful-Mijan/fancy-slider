@@ -17,20 +17,30 @@ const KEY = '15674931-a9d714b6e9d654524df198e00&q';
 const showImages = (images) => {
   imagesArea.style.display = 'block';
   gallery.innerHTML = '';
-  // show gallery title
-  galleryHeader.style.display = 'flex';
-  images.forEach(image => {
-    let div = document.createElement('div');
-    div.className = 'col-lg-3 col-md-4 col-xs-6 img-item mb-2';
-    div.innerHTML = ` <img class="img-fluid img-thumbnail" onclick=selectItem(event,"${image.webformatURL}") src="${image.webformatURL}" alt="${image.tags}">`;
-    gallery.appendChild(div)
-  })
-
+  if (images.length === 0) {
+    gallery.innerHTML = `
+    <div class=" col-md-3 mx-auto alert alert-danger text-center" role="alert">
+        This Query does not Exist in API!
+    </div>
+    `
+  }
+  else {
+    // show gallery title
+    galleryHeader.style.display = 'flex';
+    images.forEach(image => {
+      let div = document.createElement('div');
+      div.className = 'col-lg-3 col-md-4 col-xs-6 img-item mb-2';
+      div.innerHTML = ` <img class="img-fluid img-thumbnail" onclick=selectItem(event,"${image.webformatURL}") src="${image.webformatURL}" alt="${image.tags}">`;
+      gallery.appendChild(div)
+    })
+  }
+  spinner()
 }
 
 const getImages = (query) => {
   fetch(`https://pixabay.com/api/?key=${KEY}=${query}&image_type=photo&pretty=true`)
     .then(response => response.json())
+    // .then(data => console.log(data.hits))
     .then(data => showImages(data.hits))
     .catch(err => console.log(err))
 }
@@ -39,10 +49,12 @@ let slideIndex = 0;
 const selectItem = (event, img) => {
   let element = event.target;
   element.classList.toggle('added');
-
+ 
   let item = sliders.indexOf(img);
   if (item === -1) {
     sliders.push(img);
+  } else {
+    sliders.splice(item, 1);
   }
 }
 var timer
@@ -84,6 +96,12 @@ const createSlider = () => {
   }, duration);
 }
 
+// spinner 
+function spinner() {
+  let spinner = document.getElementById('spinner');
+  spinner.classList.toggle('d-none');
+}
+
 // change slider index 
 const changeItem = index => {
   changeSlide(slideIndex += index);
@@ -114,12 +132,31 @@ searchBtn.addEventListener('click', function () {
   document.querySelector('.main').style.display = 'none';
   clearInterval(timer);
   const search = document.getElementById('search');
-  getImages(search.value)
+  let username = ''
+  if (search.value == "") {
+
+    username = prompt(`'Empty String Does not Exist in API!'\nPlease Give Valid name for Search images:`);
+    search.value = username;
+    if (username == '') {
+      gallery.innerHTML = `
+          <div class=" col-md-3 mx-auto alert alert-warning text-center" role="alert">
+              Empty Query are not effective!
+          </div>
+      `
+    }
+  }
+  else if (search.value != '') {
+    getImages(search.value)
+    spinner()
+  }
+
   sliders.length = 0;
+
 })
 
 sliderBtn.addEventListener('click', function () {
   createSlider()
+
 })
 
 // keypress for search images
